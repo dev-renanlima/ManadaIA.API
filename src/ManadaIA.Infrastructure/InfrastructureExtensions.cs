@@ -29,10 +29,8 @@ public static class InfrastructureExtensions
 
         // Repositories
         services.AddScoped<IAnimalRepository, AnimalRepository>();
-        services.AddScoped<IPropertyRepository, PropertyRepository>();
-        services.AddScoped<IBatchRepository, BatchRepository>();
-        services.AddScoped<IWeighingRepository, WeighingRepository>();
-        services.AddScoped<IVaccineRepository, VaccineRepository>();
+        services.AddScoped<IReproductiveCycleRepository, ReproductiveCycleRepository>();
+        services.AddScoped<IAIPredictionRepository, AIPredictionRepository>();
 
         return services;
     }

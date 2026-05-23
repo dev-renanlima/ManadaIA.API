@@ -1,5 +1,4 @@
-using FluentValidation;
-using ManadaIA.Application.Behaviors;
+using ManadaIA.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ManadaIA.Application;
@@ -8,17 +7,11 @@ public static class ApplicationExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        var assembly = typeof(ApplicationExtensions).Assembly;
-
-        // MediatR
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(assembly);
-            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
-        });
-
-        // FluentValidation
-        services.AddValidatorsFromAssembly(assembly);
+        // Services
+        services.AddScoped<IAnimalService, AnimalService>();
+        services.AddScoped<IReproductiveCycleService, ReproductiveCycleService>();
+        services.AddScoped<IAIPredictionService, AIPredictionService>();
+        services.AddScoped<IReportService, ReportService>();
 
         return services;
     }

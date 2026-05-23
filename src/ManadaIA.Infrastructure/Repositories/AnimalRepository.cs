@@ -17,11 +17,11 @@ public sealed class AnimalRepository(Client supabase) : IAnimalRepository
         return result?.ToDomain();
     }
 
-    public async Task<Animal?> GetByEarTagAsync(string earTag, CancellationToken ct = default)
+    public async Task<Animal?> GetByCodeAsync(string code, CancellationToken ct = default)
     {
         var result = await supabase
             .From<AnimalModel>()
-            .Where(x => x.EarTag == earTag)
+            .Where(x => x.Code == code)
             .Single();
 
         return result?.ToDomain();
@@ -36,32 +36,23 @@ public sealed class AnimalRepository(Client supabase) : IAnimalRepository
         return result.Models.Select(m => m.ToDomain()).ToList();
     }
 
-    public async Task<IReadOnlyList<Animal>> GetByPropertyIdAsync(Guid propertyId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Animal>> GetByUserIdAsync(Guid userId, CancellationToken ct = default)
     {
         var result = await supabase
             .From<AnimalModel>()
-            .Where(x => x.PropertyId == propertyId)
+            .Where(x => x.UserId == userId)
             .Get();
 
         return result.Models.Select(m => m.ToDomain()).ToList();
     }
 
-    public async Task<IReadOnlyList<Animal>> GetByBatchIdAsync(Guid batchId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Animal>> GetBySpeciesAsync(Guid userId, Species species, CancellationToken ct = default)
     {
+        var speciesStr = species.ToString().ToLower();
         var result = await supabase
             .From<AnimalModel>()
-            .Where(x => x.BatchId == batchId)
-            .Get();
-
-        return result.Models.Select(m => m.ToDomain()).ToList();
-    }
-
-    public async Task<IReadOnlyList<Animal>> GetActiveAsync(Guid propertyId, CancellationToken ct = default)
-    {
-        var result = await supabase
-            .From<AnimalModel>()
-            .Where(x => x.PropertyId == propertyId)
-            .Where(x => x.Status == (int)AnimalStatus.Active)
+            .Where(x => x.UserId == userId)
+            .Where(x => x.Species == speciesStr)
             .Get();
 
         return result.Models.Select(m => m.ToDomain()).ToList();

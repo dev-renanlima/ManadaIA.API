@@ -1,29 +1,25 @@
 using ManadaIA.Application.DTOs;
-using ManadaIA.Application.Features.Animals.Commands;
-using ManadaIA.Application.Features.Animals.Queries;
-using MediatR;
+using ManadaIA.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ManadaIA.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/animals")]
 [Authorize]
-public sealed class AnimalsController(ISender sender) : ControllerBase
+public sealed class AnimalsController(IAnimalService animalService) : ControllerBase
 {
     /// <summary>
-    /// Lista todos os animais de uma propriedade
+    /// Lista todos os animais do usuário
     /// </summary>
-    [HttpGet("property/{propertyId:guid}")]
+    [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AnimalDto>), 200)]
-    public async Task<IActionResult> GetByProperty(
-        Guid propertyId,
-        [FromQuery] bool onlyActive = true,
-        CancellationToken ct = default)
+    public async Task<IActionResult> GetAll(CancellationToken ct = default)
     {
-        var query = new GetAnimalsByPropertyQuery(propertyId, onlyActive);
-        var result = await sender.Send(query, ct);
+        var userId = GetUserId();
+        var result = await animalService.GetByUserIdAsync(userId, ct);
         return Ok(result);
     }
 
@@ -35,8 +31,19 @@ public sealed class AnimalsController(ISender sender) : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct = default)
     {
-        var query = new GetAnimalByIdQuery(id);
-        var result = await sender.Send(query, ct);
+        var result = await animalService.GetByIdAsync(id, ct);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Filtra animais por espécie
+    /// </summary>
+    [HttpGet("species/{species}")]
+    [ProducesResponseType(typeof(IReadOnlyList<AnimalDto>), 200)]
+    public async Task<IActionResult> GetBySpecies(string species, CancellationToken ct = default)
+    {
+        var userId = GetUserId();
+        var result = await animalService.GetBySpeciesAsync(userId, species, ct);
         return Ok(result);
     }
 
@@ -50,18 +57,24 @@ public sealed class AnimalsController(ISender sender) : ControllerBase
         [FromBody] CreateAnimalRequest request,
         CancellationToken ct = default)
     {
-        var command = new CreateAnimalCommand(
-            request.EarTag,
-            request.Name,
-            request.Breed,
-            request.Gender,
-            request.BirthDate,
-            request.PropertyId,
-            request.InitialWeight
-        );
-
-        var result = await sender.Send(command, ct);
+        var userId = GetUserId();
+        var result = await animalService.CreateAsync(userId, request, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
+    /// <summary>
+    /// Atualiza um animal
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(AnimalDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] UpdateAnimalRequest request,
+        CancellationToken ct = default)
+    {
+        var result = await animalService.UpdateAsync(id, request, ct);
+        return Ok(result);
     }
 
     /// <summary>
@@ -72,7 +85,18 @@ public sealed class AnimalsController(ISender sender) : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default)
     {
-        // TODO: Implementar DeleteAnimalCommand
+        await animalService.DeleteAsync(id, ct);
         return NoContent();
+    }
+
+    private Guid GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                          ?? User.FindFirst("sub")?.Value;
+        
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            throw new UnauthorizedAccessException("Usuário não autenticado");
+
+        return userId;
     }
 }
