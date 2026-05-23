@@ -20,11 +20,11 @@ public sealed class ReportService(
 
         return new SummaryReportDto(
             TotalAnimals: animals.Count,
-            TotalBovinos: animals.Count(a => a.Species == Species.Bovino),
-            TotalOvinos: animals.Count(a => a.Species == Species.Ovino),
-            TotalCaprinos: animals.Count(a => a.Species == Species.Caprino),
-            TotalFemales: animals.Count(a => a.Sex == Sex.Femea),
-            TotalMales: animals.Count(a => a.Sex == Sex.Macho)
+            TotalBovinos: animals.Count(a => a.Species == Species.BOVINO),
+            TotalOvinos: animals.Count(a => a.Species == Species.OVINO),
+            TotalCaprinos: animals.Count(a => a.Species == Species.CAPRINO),
+            TotalFemales: animals.Count(a => a.Sex == Sex.FEMEA),
+            TotalMales: animals.Count(a => a.Sex == Sex.MACHO)
         );
     }
 

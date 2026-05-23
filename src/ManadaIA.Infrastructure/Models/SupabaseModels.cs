@@ -4,38 +4,41 @@ using Postgrest.Models;
 
 namespace ManadaIA.Infrastructure.Models;
 
-[Table("animais")]
+[Table("animals")]
 public sealed class AnimalModel : BaseModel
 {
     [PrimaryKey("id", false)]
     public Guid Id { get; set; }
 
-    [Column("brinco")]
-    public string EarTag { get; set; } = string.Empty;
+    [Column("user_id")]
+    public Guid UserId { get; set; }
 
-    [Column("nome")]
-    public string Name { get; set; } = string.Empty;
+    [Column("code")]
+    public string Code { get; set; } = string.Empty;
 
-    [Column("raca")]
-    public string Breed { get; set; } = string.Empty;
+    [Column("name")]
+    public string? Name { get; set; }
 
-    [Column("sexo")]
-    public int Gender { get; set; }
+    [Column("species")]
+    public string Species { get; set; } = string.Empty;
 
-    [Column("data_nascimento")]
-    public DateTime BirthDate { get; set; }
+    [Column("sex")]
+    public string Sex { get; set; } = string.Empty;
 
-    [Column("peso_atual")]
-    public decimal? CurrentWeight { get; set; }
+    [Column("breed")]
+    public string? Breed { get; set; }
 
-    [Column("status")]
-    public int Status { get; set; }
+    [Column("lineage")]
+    public string? Lineage { get; set; }
 
-    [Column("propriedade_id")]
-    public Guid PropertyId { get; set; }
+    [Column("birth_date")]
+    public DateTime? BirthDate { get; set; }
 
-    [Column("lote_id")]
-    public Guid? BatchId { get; set; }
+    [Column("weight_kg")]
+    public decimal? WeightKg { get; set; }
+
+    [Column("notes")]
+    public string? Notes { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
@@ -43,119 +46,51 @@ public sealed class AnimalModel : BaseModel
     [Column("updated_at")]
     public DateTime? UpdatedAt { get; set; }
 
-    public Animal ToDomain() => Animal.Create(
-        EarTag,
-        Name,
-        Breed,
-        (Gender)Gender,
-        BirthDate,
-        PropertyId,
-        CurrentWeight
-    );
+    public Animal ToDomain()
+    {
+        var species = Enum.Parse<Species>(Species, true);
+        var sex = Enum.Parse<Sex>(Sex, true);
+
+        // Usar reflection para criar instância (já que o construtor é privado)
+        var animal = (Animal)Activator.CreateInstance(typeof(Animal), true)!;
+
+        typeof(Animal).GetProperty("Id")!.SetValue(animal, Id);
+        typeof(Animal).GetProperty("UserId")!.SetValue(animal, UserId);
+        typeof(Animal).GetProperty("Code")!.SetValue(animal, Code);
+        typeof(Animal).GetProperty("Name")!.SetValue(animal, Name);
+        typeof(Animal).GetProperty("Species")!.SetValue(animal, species);
+        typeof(Animal).GetProperty("Sex")!.SetValue(animal, sex);
+        typeof(Animal).GetProperty("Breed")!.SetValue(animal, Breed);
+        typeof(Animal).GetProperty("Lineage")!.SetValue(animal, Lineage);
+        typeof(Animal).GetProperty("BirthDate")!.SetValue(animal, BirthDate);
+        typeof(Animal).GetProperty("WeightKg")!.SetValue(animal, WeightKg);
+        typeof(Animal).GetProperty("Notes")!.SetValue(animal, Notes);
+        typeof(Animal).GetProperty("CreatedAt")!.SetValue(animal, CreatedAt);
+        typeof(Animal).GetProperty("UpdatedAt")!.SetValue(animal, UpdatedAt);
+
+        return animal;
+    }
 
     public static AnimalModel FromDomain(Animal animal) => new()
     {
         Id = animal.Id,
-        EarTag = animal.EarTag,
+        UserId = animal.UserId,
+        Code = animal.Code,
         Name = animal.Name,
+        Species = animal.Species.ToString().ToLower(),
+        Sex = animal.Sex.ToString().ToLower(),
         Breed = animal.Breed,
-        Gender = (int)animal.Gender,
+        Lineage = animal.Lineage,
         BirthDate = animal.BirthDate,
-        CurrentWeight = animal.CurrentWeight,
-        Status = (int)animal.Status,
-        PropertyId = animal.PropertyId,
-        BatchId = animal.BatchId,
+        WeightKg = animal.WeightKg,
+        Notes = animal.Notes,
         CreatedAt = animal.CreatedAt,
         UpdatedAt = animal.UpdatedAt
     };
 }
 
-[Table("propriedades")]
-public sealed class PropertyModel : BaseModel
-{
-    [PrimaryKey("id", false)]
-    public Guid Id { get; set; }
-
-    [Column("nome")]
-    public string Name { get; set; } = string.Empty;
-
-    [Column("cidade")]
-    public string City { get; set; } = string.Empty;
-
-    [Column("estado")]
-    public string State { get; set; } = string.Empty;
-
-    [Column("area_hectares")]
-    public decimal? AreaHectares { get; set; }
-
-    [Column("inscricao")]
-    public string? Registration { get; set; }
-
-    [Column("is_active")]
-    public bool IsActive { get; set; }
-
-    [Column("proprietario_id")]
-    public Guid OwnerId { get; set; }
-
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
-
-    [Column("updated_at")]
-    public DateTime? UpdatedAt { get; set; }
-
-    public static PropertyModel FromDomain(Property property) => new()
-    {
-        Id = property.Id,
-        Name = property.Name,
-        City = property.City,
-        State = property.State,
-        AreaHectares = property.AreaHectares,
-        Registration = property.Registration,
-        IsActive = property.IsActive,
-        OwnerId = property.OwnerId,
-        CreatedAt = property.CreatedAt,
-        UpdatedAt = property.UpdatedAt
-    };
-}
-
-[Table("lotes")]
-public sealed class BatchModel : BaseModel
-{
-    [PrimaryKey("id", false)]
-    public Guid Id { get; set; }
-
-    [Column("nome")]
-    public string Name { get; set; } = string.Empty;
-
-    [Column("descricao")]
-    public string? Description { get; set; }
-
-    [Column("propriedade_id")]
-    public Guid PropertyId { get; set; }
-
-    [Column("is_active")]
-    public bool IsActive { get; set; }
-
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
-
-    [Column("updated_at")]
-    public DateTime? UpdatedAt { get; set; }
-
-    public static BatchModel FromDomain(Batch batch) => new()
-    {
-        Id = batch.Id,
-        Name = batch.Name,
-        Description = batch.Description,
-        PropertyId = batch.PropertyId,
-        IsActive = batch.IsActive,
-        CreatedAt = batch.CreatedAt,
-        UpdatedAt = batch.UpdatedAt
-    };
-}
-
-[Table("pesagens")]
-public sealed class WeighingModel : BaseModel
+[Table("reproductive_cycles")]
+public sealed class ReproductiveCycleModel : BaseModel
 {
     [PrimaryKey("id", false)]
     public Guid Id { get; set; }
@@ -163,31 +98,74 @@ public sealed class WeighingModel : BaseModel
     [Column("animal_id")]
     public Guid AnimalId { get; set; }
 
-    [Column("peso")]
-    public decimal Weight { get; set; }
+    [Column("event_date")]
+    public DateTime EventDate { get; set; }
 
-    [Column("data_pesagem")]
-    public DateTime WeighingDate { get; set; }
+    [Column("event_type")]
+    public string EventType { get; set; } = string.Empty;
 
-    [Column("observacoes")]
-    public string? Observations { get; set; }
+    [Column("sire_name")]
+    public string? SireName { get; set; }
+
+    [Column("semen_batch")]
+    public string? SemenBatch { get; set; }
+
+    [Column("technique")]
+    public string? Technique { get; set; }
+
+    [Column("technician")]
+    public string? Technician { get; set; }
+
+    [Column("result")]
+    public string? Result { get; set; }
+
+    [Column("notes")]
+    public string? Notes { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 
-    public static WeighingModel FromDomain(Weighing weighing) => new()
+    public ReproductiveCycle ToDomain()
     {
-        Id = weighing.Id,
-        AnimalId = weighing.AnimalId,
-        Weight = weighing.Weight,
-        WeighingDate = weighing.WeighingDate,
-        Observations = weighing.Observations,
-        CreatedAt = weighing.CreatedAt
+        var eventType = Enum.Parse<EventType>(EventType, true);
+        Technique? technique = string.IsNullOrWhiteSpace(Technique) ? null : Enum.Parse<Technique>(Technique, true);
+        Result? result = string.IsNullOrWhiteSpace(Result) ? null : Enum.Parse<Result>(Result, true);
+
+        var cycle = (ReproductiveCycle)Activator.CreateInstance(typeof(ReproductiveCycle), true)!;
+
+        typeof(ReproductiveCycle).GetProperty("Id")!.SetValue(cycle, Id);
+        typeof(ReproductiveCycle).GetProperty("AnimalId")!.SetValue(cycle, AnimalId);
+        typeof(ReproductiveCycle).GetProperty("EventDate")!.SetValue(cycle, EventDate);
+        typeof(ReproductiveCycle).GetProperty("EventType")!.SetValue(cycle, eventType);
+        typeof(ReproductiveCycle).GetProperty("SireName")!.SetValue(cycle, SireName);
+        typeof(ReproductiveCycle).GetProperty("SemenBatch")!.SetValue(cycle, SemenBatch);
+        typeof(ReproductiveCycle).GetProperty("Technique")!.SetValue(cycle, technique);
+        typeof(ReproductiveCycle).GetProperty("Technician")!.SetValue(cycle, Technician);
+        typeof(ReproductiveCycle).GetProperty("Result")!.SetValue(cycle, result);
+        typeof(ReproductiveCycle).GetProperty("Notes")!.SetValue(cycle, Notes);
+        typeof(ReproductiveCycle).GetProperty("CreatedAt")!.SetValue(cycle, CreatedAt);
+
+        return cycle;
+    }
+
+    public static ReproductiveCycleModel FromDomain(ReproductiveCycle cycle) => new()
+    {
+        Id = cycle.Id,
+        AnimalId = cycle.AnimalId,
+        EventDate = cycle.EventDate,
+        EventType = cycle.EventType.ToString().ToLower(),
+        SireName = cycle.SireName,
+        SemenBatch = cycle.SemenBatch,
+        Technique = cycle.Technique?.ToString().ToLower(),
+        Technician = cycle.Technician,
+        Result = cycle.Result?.ToString().ToLower(),
+        Notes = cycle.Notes,
+        CreatedAt = cycle.CreatedAt
     };
 }
 
-[Table("vacinas")]
-public sealed class VaccineModel : BaseModel
+[Table("ai_predictions")]
+public sealed class AIPredictionModel : BaseModel
 {
     [PrimaryKey("id", false)]
     public Guid Id { get; set; }
@@ -195,37 +173,73 @@ public sealed class VaccineModel : BaseModel
     [Column("animal_id")]
     public Guid AnimalId { get; set; }
 
-    [Column("nome_vacina")]
-    public string VaccineName { get; set; } = string.Empty;
+    [Column("cycle_id")]
+    public Guid? CycleId { get; set; }
 
-    [Column("data_aplicacao")]
-    public DateTime ApplicationDate { get; set; }
+    [Column("prediction_date")]
+    public DateTime PredictionDate { get; set; }
 
-    [Column("data_proxima_dose")]
-    public DateTime? NextDoseDate { get; set; }
+    [Column("pregnancy_rate")]
+    public decimal? PregnancyRate { get; set; }
 
-    [Column("lote")]
-    public string? Batch { get; set; }
+    [Column("confidence_level")]
+    public string? ConfidenceLevel { get; set; }
 
-    [Column("veterinario")]
-    public string? Veterinarian { get; set; }
+    [Column("explanation")]
+    public string? Explanation { get; set; }
 
-    [Column("observacoes")]
-    public string? Observations { get; set; }
+    [Column("risk_factors")]
+    public string? RiskFactors { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
+    [Column("recommendations")]
+    public string? Recommendations { get; set; }
 
-    public static VaccineModel FromDomain(Vaccine vaccine) => new()
+    [Column("ai_model_used")]
+    public string? AiModelUsed { get; set; }
+
+    [Column("raw_prompt")]
+    public string? RawPrompt { get; set; }
+
+    [Column("raw_response")]
+    public string? RawResponse { get; set; }
+
+    public AIPrediction ToDomain()
     {
-        Id = vaccine.Id,
-        AnimalId = vaccine.AnimalId,
-        VaccineName = vaccine.VaccineName,
-        ApplicationDate = vaccine.ApplicationDate,
-        NextDoseDate = vaccine.NextDoseDate,
-        Batch = vaccine.Batch,
-        Veterinarian = vaccine.Veterinarian,
-        Observations = vaccine.Observations,
-        CreatedAt = vaccine.CreatedAt
+        ConfidenceLevel? confidenceLevel = string.IsNullOrWhiteSpace(ConfidenceLevel)
+            ? null
+            : Enum.Parse<ConfidenceLevel>(ConfidenceLevel, true);
+
+        var prediction = (AIPrediction)Activator.CreateInstance(typeof(AIPrediction), true)!;
+
+        typeof(AIPrediction).GetProperty("Id")!.SetValue(prediction, Id);
+        typeof(AIPrediction).GetProperty("AnimalId")!.SetValue(prediction, AnimalId);
+        typeof(AIPrediction).GetProperty("CycleId")!.SetValue(prediction, CycleId);
+        typeof(AIPrediction).GetProperty("PredictionDate")!.SetValue(prediction, PredictionDate);
+        typeof(AIPrediction).GetProperty("PregnancyRate")!.SetValue(prediction, PregnancyRate);
+        typeof(AIPrediction).GetProperty("ConfidenceLevel")!.SetValue(prediction, confidenceLevel);
+        typeof(AIPrediction).GetProperty("Explanation")!.SetValue(prediction, Explanation);
+        typeof(AIPrediction).GetProperty("RiskFactors")!.SetValue(prediction, RiskFactors);
+        typeof(AIPrediction).GetProperty("Recommendations")!.SetValue(prediction, Recommendations);
+        typeof(AIPrediction).GetProperty("AiModelUsed")!.SetValue(prediction, AiModelUsed);
+        typeof(AIPrediction).GetProperty("RawPrompt")!.SetValue(prediction, RawPrompt);
+        typeof(AIPrediction).GetProperty("RawResponse")!.SetValue(prediction, RawResponse);
+
+        return prediction;
+    }
+
+    public static AIPredictionModel FromDomain(AIPrediction prediction) => new()
+    {
+        Id = prediction.Id,
+        AnimalId = prediction.AnimalId,
+        CycleId = prediction.CycleId,
+        PredictionDate = prediction.PredictionDate,
+        PregnancyRate = prediction.PregnancyRate,
+        ConfidenceLevel = prediction.ConfidenceLevel?.ToString().ToLower(),
+        Explanation = prediction.Explanation,
+        RiskFactors = prediction.RiskFactors,
+        Recommendations = prediction.Recommendations,
+        AiModelUsed = prediction.AiModelUsed,
+        RawPrompt = prediction.RawPrompt,
+        RawResponse = prediction.RawResponse
     };
 }
