@@ -2,6 +2,7 @@ using ManadaIA.Domain.Entities;
 using ManadaIA.Domain.Interfaces;
 using ManadaIA.Infrastructure.Models;
 using Supabase;
+using System.Data.SqlTypes;
 
 namespace ManadaIA.Infrastructure.Repositories;
 
@@ -17,11 +18,11 @@ public sealed class AnimalRepository(Client supabase) : IAnimalRepository
         return result?.ToDomain();
     }
 
-    public async Task<Animal?> GetByEarTagAsync(string earTag, CancellationToken ct = default)
+    public async Task<Animal?> GetByCodeAsync(string code, CancellationToken ct = default)
     {
         var result = await supabase
             .From<AnimalModel>()
-            .Where(x => x.EarTag == earTag)
+            .Where(x => x.Code == code)
             .Single();
 
         return result?.ToDomain();
@@ -36,41 +37,43 @@ public sealed class AnimalRepository(Client supabase) : IAnimalRepository
         return result.Models.Select(m => m.ToDomain()).ToList();
     }
 
-    public async Task<IReadOnlyList<Animal>> GetByPropertyIdAsync(Guid propertyId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Animal>> GetByUserIdAsync(Guid userId, CancellationToken ct = default)
     {
         var result = await supabase
             .From<AnimalModel>()
-            .Where(x => x.PropertyId == propertyId)
+            .Where(x => x.UserId == userId)
             .Get();
 
         return result.Models.Select(m => m.ToDomain()).ToList();
     }
 
-    public async Task<IReadOnlyList<Animal>> GetByBatchIdAsync(Guid batchId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Animal>> GetBySpeciesAsync(Guid userId, Species species, CancellationToken ct = default)
     {
+        var speciesStr = species.ToString().ToUpper();
         var result = await supabase
             .From<AnimalModel>()
-            .Where(x => x.BatchId == batchId)
+            .Where(x => x.UserId == userId)
+            .Where(x => x.Species == speciesStr)
             .Get();
 
         return result.Models.Select(m => m.ToDomain()).ToList();
     }
 
-    public async Task<IReadOnlyList<Animal>> GetActiveAsync(Guid propertyId, CancellationToken ct = default)
-    {
-        var result = await supabase
-            .From<AnimalModel>()
-            .Where(x => x.PropertyId == propertyId)
-            .Where(x => x.Status == (int)AnimalStatus.Active)
-            .Get();
-
-        return result.Models.Select(m => m.ToDomain()).ToList();
-    }
-
-    public async Task AddAsync(Animal entity, CancellationToken ct = default)
+    public async Task<Animal> AddAsync(Animal entity, CancellationToken ct = default)
     {
         var model = AnimalModel.FromDomain(entity);
-        await supabase.From<AnimalModel>().Insert(model);
+
+        var response = await supabase
+            .From<AnimalModel>()
+            .Insert(model, new Postgrest.QueryOptions
+            {
+                Returning = Postgrest.QueryOptions.ReturnType.Representation
+            });
+
+        var inserted = response.Models.FirstOrDefault() ?? throw new SqlNullValueException();
+
+        entity.SetId(inserted.Id);
+        return entity;
     }
 
     public async Task UpdateAsync(Animal entity, CancellationToken ct = default)

@@ -52,11 +52,11 @@ public sealed class ExceptionMiddleware(
                 Instance = context.Request.Path
             },
 
-            FluentValidation.ValidationException validation => new ProblemDetails
+            ArgumentException argument => new ProblemDetails
             {
                 Status = (int)HttpStatusCode.BadRequest,
-                Title = "Erro de validação",
-                Detail = validation.Message,
+                Title = "Argumento inválido",
+                Detail = argument.Message,
                 Instance = context.Request.Path
             },
 

@@ -6,104 +6,85 @@ namespace ManadaIA.Domain.Entities;
 public sealed class Animal
 {
     public Guid Id { get; private set; }
-    public string EarTag { get; private set; } = string.Empty; // Identificação do animal
-    public string Name { get; private set; } = string.Empty;
-    public string Breed { get; private set; } = string.Empty;
-    public Gender Gender { get; private set; }
-    public DateTime BirthDate { get; private set; }
-    public decimal? CurrentWeight { get; private set; }
-    public AnimalStatus Status { get; private set; }
-    public Guid PropertyId { get; private set; }
-    public Guid? BatchId { get; private set; }
+    public Guid UserId { get; private set; }
+    public string Code { get; private set; } = string.Empty;
+    public string? Name { get; private set; }
+    public Species Species { get; private set; }
+    public Sex Sex { get; private set; }
+    public string? Breed { get; private set; }
+    public string? Lineage { get; private set; }
+    public DateTime? BirthDate { get; private set; }
+    public decimal? WeightKg { get; private set; }
+    public string? Notes { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
-    // EF/ORM private constructor
     private Animal() { }
 
     public static Animal Create(
-        string earTag,
-        string name,
-        string breed,
-        Gender gender,
-        DateTime birthDate,
-        Guid propertyId,
-        decimal? initialWeight = null)
+        Guid userId,
+        string code,
+        Species species,
+        Sex sex,
+        string? name = null,
+        string? breed = null,
+        string? lineage = null,
+        DateTime? birthDate = null,
+        decimal? weightKg = null,
+        string? notes = null)
     {
-        if (string.IsNullOrWhiteSpace(earTag))
-            throw new ArgumentException("Brinco é obrigatório", nameof(earTag));
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Código do animal é obrigatório", nameof(code));
 
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Nome é obrigatório", nameof(name));
-
-        if (birthDate > DateTime.UtcNow)
+        if (birthDate.HasValue && birthDate.Value > DateTime.UtcNow)
             throw new ArgumentException("Data de nascimento não pode ser futura", nameof(birthDate));
 
         return new Animal
         {
-            Id = Guid.NewGuid(),
-            EarTag = earTag,
+            UserId = userId,
+            Code = code,
             Name = name,
+            Species = species,
+            Sex = sex,
             Breed = breed,
-            Gender = gender,
+            Lineage = lineage,
             BirthDate = birthDate,
-            CurrentWeight = initialWeight,
-            Status = AnimalStatus.Active,
-            PropertyId = propertyId,
+            WeightKg = weightKg,
+            Notes = notes,
             CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void UpdateWeight(decimal newWeight)
+    public void Update(
+        string? name = null,
+        string? breed = null,
+        string? lineage = null,
+        DateTime? birthDate = null,
+        decimal? weightKg = null,
+        string? notes = null)
     {
-        if (newWeight <= 0)
-            throw new ArgumentException("Peso deve ser maior que zero", nameof(newWeight));
-
-        CurrentWeight = newWeight;
+        if (name is not null) Name = name;
+        if (breed is not null) Breed = breed;
+        if (lineage is not null) Lineage = lineage;
+        if (birthDate.HasValue) BirthDate = birthDate;
+        if (weightKg.HasValue) WeightKg = weightKg;
+        if (notes is not null) Notes = notes;
+        
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void AssignBatch(Guid batchId)
-    {
-        BatchId = batchId;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void RemoveBatch()
-    {
-        BatchId = null;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void Deactivate()
-    {
-        Status = AnimalStatus.Inactive;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void Sell()
-    {
-        Status = AnimalStatus.Sold;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void MarkAsDead()
-    {
-        Status = AnimalStatus.Dead;
-        UpdatedAt = DateTime.UtcNow;
-    }
+    public void SetId(Guid id) => Id = id;
 }
 
-public enum Gender
+public enum Species
 {
-    Male = 1,
-    Female = 2
+    BOVINO,
+    OVINO,
+    CAPRINO
 }
 
-public enum AnimalStatus
+public enum Sex
 {
-    Active = 1,
-    Sold = 2,
-    Dead = 3,
-    Inactive = 4
+    FEMEA,
+    MACHO
 }
